@@ -2,30 +2,46 @@ import React from "react";
 import { Route, Switch } from "react-router-dom";
 import "./App.css";
 import Header from "./Component/Header/Header";
-import { auth } from "./Firebase/Utils";
+import { auth, createUserProfileDocument } from "./Firebase/Utils";
 import HomePage from "./Pages/HomePage/HomePage";
 import ShopPage from "./Pages/ShopPage/ShopPage";
 import SignInAndSignUpPage from "./Pages/SignInAndSignUpPage/SignInAndSignUpPage";
 
 class App extends React.Component {
-  constructor(){
+  constructor() {
     super();
 
-    this.state={
-      currentUser:null,
-    }
+    this.state = {
+      currentUser: null,
+    };
   }
 
   unsubscribeFromAuth = null;
 
-  componentDidMount(){
-    this.unsubscribeFromAuth = auth.onAuthStateChanged(user => {
-      this.setState({currentUser:user})
-      console.log(user);
-    })
+  componentDidMount() {
+    this.unsubscribeFromAuth = auth.onAuthStateChanged(async (userAuth) => {
+      // this.setState({currentUser:user})
+      // console.log(user);
+
+      if (userAuth) {
+        const userRef = await createUserProfileDocument(userAuth);
+
+        userRef.onSnapshot((snapShot) => {
+          this.setState({
+            currentUser: {
+              id: snapShot.id,
+              ...snapShot.data(),
+            },
+          });
+        });
+      }else{
+        this.setState({currentUser: userAuth})
+      }
+      console.log(this.state);
+    });
   }
 
-  componentWillUnmount(){
+  componentWillUnmount() {
     this.unsubscribeFromAuth();
   }
 
